@@ -1,0 +1,24 @@
+steps:
+  - simple_align:
+      cases: false
+      top_level_patterns: false
+      records: false
+  - imports:
+      align: global
+      list_align: after_alias
+      long_list_align: inline
+      empty_list_align: inherit
+      list_padding: 4
+      separate_lists: true
+  - language_pragmas:
+      style: vertical
+      align: true
+      remove_redundant: true
+
+columns: 80
+
+newline: lf
+
+language_extensions:
+  - LambdaCase
+  - ScopedTypeVariables
