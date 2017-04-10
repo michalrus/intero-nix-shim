@@ -32,7 +32,7 @@ run (Ghci opt) =
   nixExec $
   ["cabal", "repl", "--verbose=0"] ++
   maybe [] (\p -> ["--with-ghc", p]) (withGhc opt) ++
-  ((\o -> ["--ghc-options", o]) =<< (ghcOptions opt)) ++ (targets opt)
+  ((\o -> ["--ghc-options", o]) =<< ghcOptions opt) ++ targets opt
 run Path = putStrLn =<< rootDir
 run IdeTargets = traverse_ putStrLn =<< ideTargets <$> (readFile =<< cabalFile)
 
@@ -45,10 +45,10 @@ nixExec cmd = do
     ["--pure", "--run", "exec " ++ Posix.escapeMany cmd]
     Nothing
 
-rootDir :: IO (FilePath)
+rootDir :: IO FilePath
 rootDir = takeDirectory <$> cabalFile
 
-cabalFile :: IO (FilePath)
+cabalFile :: IO FilePath
 cabalFile = do
   searchDirs <- ancestors <$> getCurrentDirectory
   results <- catMaybes <$> traverse findCabal searchDirs -- FIXME: suboptimal…
@@ -56,7 +56,7 @@ cabalFile = do
     cabal:_ -> return cabal
     _ -> error "No *.cabal file found."
   where
-    ancestors d = d : (iterateUntilRepeated takeDirectory d)
+    ancestors d = d : iterateUntilRepeated takeDirectory d
     findCabal :: FilePath -> IO (Maybe FilePath)
     findCabal dir = do
       mf <- find (\f -> takeExtension f == ".cabal") <$> listDirectory dir
@@ -83,14 +83,11 @@ ideTargets cabal =
           k:v:_ -> [(k, v)]
           _ -> []
       name = fromMaybe "_" $ snd <$> find (\(k, _) -> k == "name") kvs
-      lib =
-        if elem "library" lns
-          then ["lib"]
-          else []
-      tpe s l = ((++) $ s ++ ":") <$> snd <$> filter (\(k, _) -> k == l) kvs
+      lib = ["lib" | "library" `elem` lns]
+      tpe s l = (++) (s ++ ":") . snd <$> filter (\(k, _) -> k == l) kvs
       exe = tpe "exe" "executable"
       test = tpe "test" "test-suite"
-  in ((++) $ name ++ ":") <$> (lib ++ exe ++ test)
+  in (++) (name ++ ":") <$> (lib ++ exe ++ test)
 
 parse :: Parser Command
 parse =
@@ -113,16 +110,20 @@ parse =
        (info
           (Exec <$ verbosity <*> some (argument str (metavar "CMD…")))
           fullDesc) <>
-     command "path" (info (Path <$ flag' () (long "project-root")) fullDesc) <>
+     command
+       "path"
+       (info (Path <$ flag' () (long "project-root") <* verbosity) fullDesc) <>
      command
        "ghc"
        (info
-          (Exec <$> ((:) "ghc" <$> many (argument str (metavar "ARG…"))))
+          (Exec <$> ((:) "ghc" <$> many (argument str (metavar "ARG…"))) <*
+           verbosity)
           fullDesc) <>
      command
        "ide"
        (info
-          (hsubparser (command "targets" (info (pure IdeTargets) fullDesc)))
+          (hsubparser
+             (command "targets" (info (IdeTargets <$ verbosity) fullDesc)))
           fullDesc) <>
      command
        "hoogle"
