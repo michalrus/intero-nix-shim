@@ -27,10 +27,10 @@ main :: IO ()
 main = run =<< execParser (info (parse <**> helper) fullDesc)
 
 run :: Command -> IO ()
-run (Exec cmd) = nixExec $ ["cabal", "exec", "--"] ++ cmd
+run (Exec cmd) = nixExec $ ["cabal", "exec", "--verbose=0", "--"] ++ cmd
 run (Ghci opt) =
   nixExec $
-  ["cabal", "repl"] ++
+  ["cabal", "repl", "--verbose=0"] ++
   maybe [] (\p -> ["--with-ghc", p]) (withGhc opt) ++
   ((\o -> ["--ghc-options", o]) =<< (ghcOptions opt)) ++ (targets opt)
 run Path = putStrLn =<< rootDir
