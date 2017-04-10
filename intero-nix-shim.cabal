@@ -15,8 +15,14 @@ executable intero-nix-shim
   hs-source-dirs:      src
   main-is:             Main.hs
   ghc-options:         -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
+  default-extensions:  LambdaCase
   build-depends:       base
                      , optparse-applicative
+                     , filepath
+                     , directory
+                     , split
+                     , posix-escape
+                     , unix
   default-language:    Haskell2010
 
 source-repository head
