@@ -42,7 +42,7 @@ nixExec cmd = do
   executeFile
     "nix-shell"
     True
-    ["--pure", "--run", "exec " ++ Posix.escapeMany cmd]
+    ["--pure", "--quiet", "--run", "exec " ++ Posix.escapeMany cmd]
     Nothing
 
 rootDir :: IO FilePath
