@@ -30,7 +30,7 @@ run :: Command -> IO ()
 run (Exec cmd) = nixExec $ ["cabal", "exec", "--verbose=0", "--"] ++ cmd -- TODO: do these really need to be run inside Cabal’s context?
 run (Ghci opt) =
   nixExec $
-  ["cabal", "repl", "--verbose=0"] ++
+  ["cabal", "repl"] ++ -- Important: do NOT pass `--verbose=0` to `cabal repl` or user errors won’t be shown by Flycheck.
   maybe [] (\p -> ["--with-ghc", p]) (withGhc opt) ++
   ((\o -> ["--ghc-options", o]) =<< ghcOptions opt) ++ targets opt
 run Path = putStrLn =<< rootDir
