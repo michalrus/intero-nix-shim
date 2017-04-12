@@ -27,7 +27,7 @@ main :: IO ()
 main = run =<< execParser (info (parse <**> helper) fullDesc)
 
 run :: Command -> IO ()
-run (Exec cmd) = nixExec $ ["cabal", "exec", "--verbose=0", "--"] ++ cmd
+run (Exec cmd) = nixExec $ ["cabal", "exec", "--verbose=0", "--"] ++ cmd -- TODO: do these really need to be run inside Cabal’s context?
 run (Ghci opt) =
   nixExec $
   ["cabal", "repl", "--verbose=0"] ++
@@ -59,7 +59,10 @@ cabalFile = do
     ancestors d = d : iterateUntilRepeated takeDirectory d
     findCabal :: FilePath -> IO (Maybe FilePath)
     findCabal dir = do
-      mf <- find (\f -> takeExtension f == ".cabal") <$> listDirectory dir
+      mf <-
+        find
+          (\f -> takeExtension f == ".cabal" && (not . null $ takeBaseName f)) <$>
+        listDirectory dir
       return $ combine dir <$> mf
 
 iterateUntilRepeated
