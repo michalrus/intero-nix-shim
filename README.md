@@ -55,4 +55,4 @@ Or, simpler, by using https://github.com/shlevy/nix-buffer.
 
 ## Examples
 
-For a self-contained example, please, clone https://github.com/michalrus/kornel, visit its `Main.hs` in Emacs, accept its `.dir-locals.el`, start `(intero-mode)`, and wait a moment.
+For a self-contained example, please, clone https://github.com/michalrus/kornel, visit its `Main.hs` in Emacs, accept its `.dir-locals.el`, start `(intero-mode)`, and wait a moment. (Consider running `nix-shell --pure --run intero-nix-shim` in a terminal in the project’s directory first, not to freeze your Emacs for a significant time.)
