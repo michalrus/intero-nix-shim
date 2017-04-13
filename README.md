@@ -30,6 +30,6 @@ Then you’d have to somehow resolve its path in `.dir-locals.el`, e.g. by runni
 
 Or, simpler, by using https://github.com/shlevy/nix-buffer.
 
-## Examples
+## Real world examples
 
-For a self-contained example, please, clone https://github.com/michalrus/kornel, visit its `Main.hs` in Emacs, accept its `.dir-locals.el`, start `(intero-mode)`, and wait a moment. (Consider running `nix-shell --pure --run intero-nix-shim` in a terminal in the project’s directory first, not to freeze your Emacs for a significant time.)
+For a self-contained one, please, clone https://github.com/michalrus/kornel, visit its `Main.hs` in Emacs, accept its `.dir-locals.el`, start `(intero-mode)`, and wait a moment. Consider running `nix-shell --pure --run 'intero-nix-shim --help'` in a terminal in the project’s directory first, not to freeze your Emacs for a significant time. Also, when opening new Haskell buffers in this project, the value for `intero-stack-executable` will need to be recalculated by Nix, significantly slowing you down. That’s why, performance wise, it’s best to install `intero-nix-shim` globally. Compare the `.dir-locals.el` proposed above with ones in this project.
