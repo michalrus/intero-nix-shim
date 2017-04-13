@@ -2,18 +2,17 @@
 
 ## High-level view
 
-1. `nix-shell --pure` started inside of you project’s directory should have the `intero` and `cabal` executables in its PATH. Check whether it works with:
-    ```
-    $ cd your-project/
-    $ nix-shell --pure --run intero
-    ```
-1. `intero-stack-executable` Emacs variable needs to point to `/nix/store/…-intero-nix-shim-…/bin/intero-nix-shim`.
+You need to have `default.nix` and `shell.nix` defined for your project, see https://nixos.org/nixpkgs/manual/#how-to-create-nix-builds-for-your-own-private-haskell-packages.
+
+Emacs’ `intero-stack-executable` variable needs to point to `/nix/store/…-intero-nix-shim-…/bin/intero-nix-shim`.
+
+You can set it to just `"intero-nix-shim"`, if it’s available in your global `PATH`. (By default, that variable is set to `"stack"`.)
 
 ## Simple how to
 
 There are several ways to achieve the above.
 
-Probably, the simplest one would be to install `haskellPackages.intero-nix-shim` globally in your PATH and set `intero-stack-executable` to just `"intero-nix-shim"` in `.dir-locals.el` for your project:
+Probably, the simplest one would be to install `haskellPackages.intero-nix-shim` globally in your `PATH` and set `intero-stack-executable` to just `"intero-nix-shim"` in `.dir-locals.el` for your project:
 
 ```elisp
 ;; your-project/.dir-locals.el
@@ -21,29 +20,7 @@ Probably, the simplest one would be to install `haskellPackages.intero-nix-shim`
 ((nil . ((intero-stack-executable . "intero-nix-shim"))))
 ```
 
-Don’t forget to add `intero` and `cabal` to your project’s `nix-shell`, e.g. like that:
-
-```nix
-# your-project/default.nix
-
-let
-
-  compiler = haskell.packages.ghc802;
-
-  build = compiler.callCabal2nix pname ./. {};
-
-  env = lib.overrideDerivation build.env (oldAttrs: {
-    buildInputs = with compiler; [ cabal-install intero ];
-  });
-
-in build // { inherit env; }
-```
-
-```nix
-# your-project/shell.nix
-
-(import ./default.nix).env
-```
+**Warning**: if you choose the `.dir-locals.el` way, Emacs has a security mechanism to prevent untrusted code execution. You will have to accept this setting. If you use `global-intero-mode`, Intero will start loading before you manage to whitelist this setting. Therefore, the first time, it will fail. Just do `M-x intero-restart`.
 
 ## Other options
 
