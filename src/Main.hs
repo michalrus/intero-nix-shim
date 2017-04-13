@@ -6,6 +6,7 @@ import           Data.Maybe           (catMaybes, fromMaybe, maybe)
 import           Data.Semigroup       ((<>))
 import           Options.Applicative
 import           System.Directory
+import           System.Environment   (getExecutablePath)
 import           System.FilePath
 import qualified System.Posix.Escape  as Posix
 import           System.Posix.Process (executeFile)
@@ -27,12 +28,30 @@ main :: IO ()
 main = run =<< execParser (info (parse <**> helper) fullDesc)
 
 run :: Command -> IO ()
-run (Exec cmd) = nixExec $ ["cabal", "exec", "--verbose=0", "--"] ++ cmd -- TODO: do these really need to be run inside Cabal’s context?
-run (Ghci opt) =
-  nixExec $
-  ["cabal", "repl"] ++ -- Important: do NOT pass `--verbose=0` to `cabal repl` or user errors won’t be shown by Flycheck.
-  maybe [] (\p -> ["--with-ghc", p]) (withGhc opt) ++
-  ((\o -> ["--ghc-options", o]) =<< ghcOptions opt) ++ targets opt
+run (Exec cmd) = do
+  cabal <- findCabalExec
+  intero <- findInteroExec
+  let absCmd =
+        case cmd of
+          "intero":t -> intero : t
+          xs -> xs
+  nixExec $ [cabal, "exec", "--verbose=0", "--"] ++ absCmd -- TODO: do these really need to be run inside Cabal’s context?
+run (Ghci opt) = do
+  cabal <- findCabalExec
+  intero <- findInteroExec
+  let ghcSubst =
+        maybe
+          []
+          (\p ->
+             [ "--with-ghc"
+             , if p == "intero"
+                 then intero
+                 else p
+             ])
+          (withGhc opt)
+  let ghcOpts = ((\o -> ["--ghc-options", o]) =<< ghcOptions opt)
+  -- Important: do NOT pass `--verbose=0` to `cabal repl` or users’ errors won’t be shown in Flycheck.
+  nixExec $ [cabal, "repl"] ++ ghcSubst ++ ghcOpts ++ targets opt
 run Path = putStrLn =<< rootDir
 run IdeTargets = traverse_ putStrLn =<< ideTargets <$> (readFile =<< cabalFile)
 
@@ -44,6 +63,21 @@ nixExec cmd = do
     True
     ["--pure", "--quiet", "--run", "exec " ++ Posix.escapeMany cmd]
     Nothing
+
+findCabalExec :: IO FilePath
+findCabalExec = findInLibExec "cabal"
+
+findInteroExec :: IO FilePath
+findInteroExec = findInLibExec "intero"
+
+findInLibExec :: String -> IO FilePath
+findInLibExec name = do
+  me <- canonicalizePath =<< getExecutablePath
+  libexec <- canonicalizePath $ takeDirectory me </> ".." </> "libexec"
+  x <- findExecutablesInDirectories [libexec] name
+  case x of
+    res:_ -> return res
+    _ -> error $ "No ‘" ++ name ++ "’ found in ‘" ++ libexec ++ "’."
 
 rootDir :: IO FilePath
 rootDir = takeDirectory <$> cabalFile

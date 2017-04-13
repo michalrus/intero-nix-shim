@@ -9,10 +9,19 @@ let
          lib.all (i: toString i !=            path) [ ./.git ./dist ./result ]
       && lib.all (i:          i != baseNameOf path) [ ".stack-work" ])
       ./.;
-  in haskellPackages.callCabal2nix "intero-nix-shim" src {};
+  in lib.overrideDerivation (haskellPackages.callCabal2nix "intero-nix-shim" src {}) (oldAttrs: {
+    postInstall = ''
+      mkdir -p $out/libexec
+      ln -s ${haskellPackages.cabal-install}/bin/cabal  $out/libexec
+      ln -s ${haskellPackages.intero       }/bin/intero $out/libexec
+    '';
+  });
 
   env = lib.overrideDerivation build.env (oldAttrs: {
-    buildInputs = with haskellPackages; [ cabal-install hlint hindent stylish-haskell intero ];
+    buildInputs = with haskellPackages; [
+      cabal-install intero # needed for ./dogfood.sh
+      hlint hindent stylish-haskell
+    ];
   });
 
 in build // { inherit env; }
