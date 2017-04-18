@@ -18,10 +18,13 @@ let
   });
 
   env = lib.overrideDerivation build.env (oldAttrs: {
-    buildInputs = with haskellPackages; [
-      cabal-install intero # needed for ./dogfood.sh
-      hlint hindent stylish-haskell
-    ];
+    buildInputs =
+      [ indent ]
+      ++
+      (with haskellPackages; [
+        cabal-install intero # needed for ./dogfood.sh
+        hlint hindent stylish-haskell
+      ]);
   });
 
 in build // { inherit env; }

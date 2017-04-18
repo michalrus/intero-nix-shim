@@ -1,5 +1,6 @@
 module Main where
 
+import           Control.Monad        (when)
 import           Data.Foldable        (find, traverse_)
 import qualified Data.List.Split      as S
 import           Data.Maybe           (catMaybes, fromMaybe, maybe)
@@ -10,6 +11,8 @@ import           System.Environment   (getExecutablePath)
 import           System.FilePath
 import qualified System.Posix.Escape  as Posix
 import           System.Posix.Process (executeFile)
+
+foreign import ccall "silence_stderr" silenceStderr :: IO ()
 
 data Command
   = Ghci GhciOpts
@@ -29,13 +32,15 @@ main = run =<< execParser (info (parse <**> helper) fullDesc)
 
 run :: Command -> IO ()
 run (Exec cmd) = do
-  cabal <- findCabalExec
   intero <- findInteroExec
   let absCmd =
         case cmd of
           "intero":t -> intero : t
           xs -> xs
-  nixExec $ [cabal, "exec", "--verbose=0", "--"] ++ absCmd -- TODO: do these really need to be run inside Cabal’s context?
+  when
+    (cmd == ["intero", "--version"])
+    silenceStderr -- https://github.com/michalrus/intero-nix-shim/issues/1
+  nixExec $ absCmd
 run (Ghci opt) = do
   cabal <- findCabalExec
   intero <- findInteroExec
@@ -61,7 +66,12 @@ nixExec cmd = do
   executeFile
     "nix-shell"
     True
-    ["--pure", "--quiet", "--run", "exec " ++ Posix.escapeMany cmd]
+    [ "--pure"
+    , "--no-build-output"
+    , "--quiet"
+    , "--run"
+    , "exec " ++ Posix.escapeMany cmd
+    ]
     Nothing
 
 findCabalExec :: IO FilePath
