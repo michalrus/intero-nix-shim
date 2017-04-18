@@ -39,7 +39,7 @@ run (Exec cmd) = do
           xs -> xs
   when
     (cmd == ["intero", "--version"])
-    silenceStderr -- https://github.com/michalrus/intero-nix-shim/issues/1
+    silenceStderr -- https://github.com/michalrus/intero-nix-shim/issues/1 https://github.com/NixOS/nix/issues/1341
   nixExec $ absCmd
 run (Ghci opt) = do
   cabal <- findCabalExec
