@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/michalrus/intero-nix-shim.svg?branch=master)](https://travis-ci.org/michalrus/intero-nix-shim)
+
 # intero-nix-shim
 
 ## High-level view
