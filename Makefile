@@ -17,8 +17,9 @@ _autoformat: $(shell find . '(' -name '*.hs' -o -name '*.c' ')' -a -not -path '*
 dist/autoformat/%_fmt: %
 	@echo "Formatting $<..."
 	@case "$<" in \
-			*.hs) hindent --line-length 80 "$<" \
+			*.hs) hlint "$<" \
+				 && hindent --line-length 80 "$<" \
 				 && stylish-haskell --inplace "$<" \
 						;; \
 			*.c) indent -linux "$<" && rm "$<"~ ;; \
-		esac && mkdir -p "$(dir $@)" && touch "$@" || true
+		esac && mkdir -p "$(dir $@)" && touch "$@"

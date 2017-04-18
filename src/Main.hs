@@ -40,7 +40,7 @@ run (Exec cmd) = do
   when
     (cmd == ["intero", "--version"])
     silenceStderr -- https://github.com/michalrus/intero-nix-shim/issues/1 https://github.com/NixOS/nix/issues/1341
-  nixExec $ absCmd
+  nixExec absCmd
 run (Ghci opt) = do
   cabal <- findCabalExec
   intero <- findInteroExec
@@ -54,7 +54,7 @@ run (Ghci opt) = do
                  else p
              ])
           (withGhc opt)
-  let ghcOpts = ((\o -> ["--ghc-options", o]) =<< ghcOptions opt)
+  let ghcOpts = (\o -> ["--ghc-options", o]) =<< ghcOptions opt
   -- Important: do NOT pass `--verbose=0` to `cabal repl` or users’ errors won’t be shown in Flycheck.
   nixExec $ [cabal, "repl"] ++ ghcSubst ++ ghcOpts ++ targets opt
 run Path = putStrLn =<< rootDir
