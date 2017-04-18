@@ -1,5 +1,5 @@
 name:                intero-nix-shim
-version:             0.1.1
+version:             0.1.2
 homepage:            https://github.com/michalrus/intero-nix-shim
 license:             Apache-2.0
 license-file:        LICENSE
