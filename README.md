@@ -21,15 +21,7 @@ Probably, the simplest one would be to install `intero-nix-shim` globally in you
 
 {
   environment.systemPackages = [
-    (import (pkgs.fetchFromGitHub {
-      owner = "michalrus";
-      repo = "intero-nix-shim";
-      rev = "8e0405f6d693dfaef3ae124adc37cd34f46c25c9";
-      sha256 = "08r18lsf0b4bi20fcfranb80pdqjd12wdi9zgh2z2xnicrlpbjk3";
-    }) {
-      nixpkgs = pkgs;
-      haskellPackages = pkgs.haskellPackages;
-    })
+    haskellPackages.intero-nix-shim
   ];
 }
 ```
