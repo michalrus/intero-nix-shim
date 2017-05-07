@@ -1,2 +1,2 @@
 language: nix
-script: make ci
+script: make -j$(nproc) ci
