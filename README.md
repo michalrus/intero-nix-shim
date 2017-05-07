@@ -14,7 +14,7 @@ You can set it to just `"intero-nix-shim"`, if it’s available in your global `
 
 There are several ways to achieve the above.
 
-Probably, the simplest one would be to install `intero-nix-shim` globally in your `PATH`, e.g.:
+Probably, the simplest one would be to install `intero-nix-shim` globally in your `PATH`, e.g., if you’re on `nixos-17.03`:
 
 ```nix
 # /etc/nixos/configuration.nix
