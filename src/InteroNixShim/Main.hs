@@ -1,4 +1,4 @@
-module Main where
+module InteroNixShim.Main where
 
 import           Control.Monad        (when)
 import           Data.Foldable        (find, traverse_)
@@ -55,10 +55,23 @@ run (Ghci opt) = do
              ])
           (withGhc opt)
   let ghcOpts = (\o -> ["--ghc-options", o]) =<< ghcOptions opt
+  -- Workaround for https://github.com/haskell/cabal/issues/4602 in Cabal 2.×
+  (projectName, availableTargets) <- ideTargets'
+  let defaultTarget =
+        if "lib" `elem` availableTargets
+          then ["lib:" ++ projectName]
+          else take 1 availableTargets
+  let targets' =
+        case targets opt of
+          [] -> defaultTarget
+          xs -> xs
   -- Important: do NOT pass `--verbose=0` to `cabal repl` or users’ errors won’t be shown in Flycheck.
-  nixExec $ [cabal, "repl"] ++ ghcSubst ++ ghcOpts ++ targets opt
+  nixExec $ [cabal, "repl"] ++ ghcSubst ++ ghcOpts ++ targets'
 run Path = putStrLn =<< rootDir
-run IdeTargets = traverse_ putStrLn =<< ideTargets <$> (readFile =<< cabalFile)
+run IdeTargets = do
+  (name, targets') <- ideTargets'
+  let mix = (++) (name ++ ":") <$> targets'
+  traverse_ putStrLn mix
 
 nixExec :: [String] -> IO ()
 nixExec cmd = do
@@ -109,9 +122,7 @@ cabalFile = do
         listDirectory dir
       return $ combine dir <$> mf
 
-iterateUntilRepeated
-  :: Eq a
-  => (a -> a) -> a -> [a]
+iterateUntilRepeated :: Eq a => (a -> a) -> a -> [a]
 iterateUntilRepeated f a0 = reverse $ loop a0 []
   where
     loop an acc =
@@ -120,8 +131,11 @@ iterateUntilRepeated f a0 = reverse $ loop a0 []
            then acc
            else loop an1 (an1 : acc)
 
+ideTargets' :: IO (String, [String])
+ideTargets' = ideTargets <$> (readFile =<< cabalFile)
+
 -- FIXME: yaml/regex/attoparsec?
-ideTargets :: String -> [String]
+ideTargets :: String -> (String, [String])
 ideTargets cabal =
   let lns = lines cabal
       splits = S.split (S.condense . S.dropDelims $ S.oneOf " :") <$> lns
@@ -134,7 +148,7 @@ ideTargets cabal =
       tpe s l = (++) (s ++ ":") . snd <$> filter (\(k, _) -> k == l) kvs
       exe = tpe "exe" "executable"
       test = tpe "test" "test-suite"
-  in (++) (name ++ ":") <$> (lib ++ exe ++ test)
+  in (name, lib ++ exe ++ test)
 
 parse :: Parser Command
 parse =
