@@ -2,6 +2,7 @@ module InteroNixShim.Main where
 
 import           Control.Monad        (when)
 import           Data.Foldable        (find, traverse_)
+import           Data.List            (stripPrefix)
 import qualified Data.List.Split      as S
 import           Data.Maybe           (catMaybes, fromMaybe, maybe)
 import           Data.Semigroup       ((<>))
@@ -64,7 +65,9 @@ run (Ghci opt) = do
   let targets' =
         case targets opt of
           [] -> defaultTarget
-          xs -> xs
+          -- strip project name prefix from stack targets before using as cabal components
+          xs -> fromMaybe xs
+                  $ sequenceA (stripPrefix (projectName ++ ":") <$> xs)
   -- Important: do NOT pass `--verbose=0` to `cabal repl` or users’ errors won’t be shown in Flycheck.
   nixExec $ [cabal, "repl"] ++ ghcSubst ++ ghcOpts ++ targets'
 run Path = putStrLn =<< rootDir
