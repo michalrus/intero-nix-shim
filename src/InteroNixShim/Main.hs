@@ -58,9 +58,10 @@ run (Ghci opt) = do
   let ghcOpts = (\o -> ["--ghc-options", o]) =<< ghcOptions opt
   -- Workaround for https://github.com/haskell/cabal/issues/4602 in Cabal 2.×
   (projectName, availableTargets) <- ideTargets'
-  let defaultTarget =
-        if "lib" `elem` availableTargets
-          then ["lib:" ++ projectName]
+  let libName = "lib:" ++ projectName
+      defaultTarget =
+        if libName `elem` availableTargets
+          then [libName]
           else take 1 availableTargets
   let targets' =
         case targets opt of
@@ -147,7 +148,7 @@ ideTargets cabal =
           k:v:_ -> [(k, v)]
           _ -> []
       name = fromMaybe "_" $ snd <$> find (\(k, _) -> k == "name") kvs
-      lib = ["lib" | "library" `elem` lns]
+      lib = ["lib:" ++ name | "library" `elem` lns]
       tpe s l = (++) (s ++ ":") . snd <$> filter (\(k, _) -> k == l) kvs
       exe = tpe "exe" "executable"
       test = tpe "test" "test-suite"
