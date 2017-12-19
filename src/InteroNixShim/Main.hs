@@ -2,6 +2,7 @@ module InteroNixShim.Main where
 
 import           Control.Monad        (when)
 import           Data.Foldable        (find, traverse_)
+import           Data.List            (stripPrefix)
 import qualified Data.List.Split      as S
 import           Data.Maybe           (catMaybes, fromMaybe, maybe)
 import           Data.Semigroup       ((<>))
@@ -57,14 +58,28 @@ run (Ghci opt) = do
   let ghcOpts = (\o -> ["--ghc-options", o]) =<< ghcOptions opt
   -- Workaround for https://github.com/haskell/cabal/issues/4602 in Cabal 2.×
   (projectName, availableTargets) <- ideTargets'
-  let defaultTarget =
-        if "lib" `elem` availableTargets
-          then ["lib:" ++ projectName]
+  let libTarget = "lib:" ++ projectName
+      defaultTargets =
+        if libTarget `elem` availableTargets
+          then [libTarget]
           else take 1 availableTargets
-  let targets' =
+      targets' =
         case targets opt of
-          [] -> defaultTarget
-          xs -> xs
+          [] -> defaultTargets
+          [t]
+            -- By default intero specifies just the package name as the target;
+            -- stack handles this by loading the library and all executables, excluding
+            -- tests and benchmarks. cabal repl can't handle multiple targets, so we
+            -- can't do much better than just using the default target.
+           ->
+            if t == projectName
+              then defaultTargets
+            -- Strip project name prefix from stack target before using as cabal component
+              else [fromMaybe t $ stripPrefix (projectName ++ ":") t]
+          _:_:_ ->
+            error
+              "intero does not support using multiple targets at once \
+                         \when using intero-nix-shim instead of stack"
   -- Important: do NOT pass `--verbose=0` to `cabal repl` or users’ errors won’t be shown in Flycheck.
   nixExec $ [cabal, "repl"] ++ ghcSubst ++ ghcOpts ++ targets'
 run Path = putStrLn =<< rootDir
@@ -144,7 +159,7 @@ ideTargets cabal =
           k:v:_ -> [(k, v)]
           _ -> []
       name = fromMaybe "_" $ snd <$> find (\(k, _) -> k == "name") kvs
-      lib = ["lib" | "library" `elem` lns]
+      lib = ["lib:" ++ name | "library" `elem` lns]
       tpe s l = (++) (s ++ ":") . snd <$> filter (\(k, _) -> k == l) kvs
       exe = tpe "exe" "executable"
       test = tpe "test" "test-suite"
