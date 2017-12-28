@@ -2,6 +2,16 @@
 
 # intero-nix-shim
 
+----
+
+## WARNING
+
+**This project will probably never work with multiple Cabal targets per project — too much effort to emulate this behavior of the original Stack. See issues #7, #6.**
+
+We suggest using Dante, which works very well with Cabal@Nix (incl. multiple targets), or HIE, after https://github.com/haskell/haskell-ide-engine/issues/357 is ready.
+
+----
+
 ## High-level view
 
 You need to have `default.nix` and `shell.nix` defined for your project, see https://nixos.org/nixpkgs/manual/#how-to-create-nix-builds-for-your-own-private-haskell-packages.
