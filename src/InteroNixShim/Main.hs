@@ -175,7 +175,7 @@ parse =
            (GhciOpts <$> optional (strOption (long "with-ghc")) <*>
             ((++) <$> many (strOption (long "ghci-options")) <*>
              many (strOption (long "ghc-options"))) <*
-            optional (strOption (long "docker-run-args")) <*
+            optional (stringOption (long "docker-run-args")) <*
             optional (switch (long "no-build")) <*
             optional (switch (long "no-load")) <*
             verbosity <*>
@@ -213,4 +213,7 @@ parse =
              many (argument str (metavar "ARG…")))))
           fullDesc))
   where
-    verbosity = optional (strOption (long "verbosity"))
+    verbosity = optional (stringOption (long "verbosity"))
+    -- used to fix an ambiguous IsString type variable for optparse-applicative >= 0.14
+    stringOption :: Mod OptionFields String -> Parser String
+    stringOption = strOption
